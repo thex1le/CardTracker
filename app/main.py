@@ -1,48 +1,39 @@
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
 
-from app.database import init_db
-from app.api.prospects import router as prospects_router
-from app.api.signals import router as signals_router
-from app.api.cards import router as cards_router
-from app.api.news import router as news_router
-from app.api.scores import router as scores_router
-from app.api.watchlist import router as watchlist_router
-
-BASE_DIR = Path(__file__).resolve().parent.parent
+from app.core.db import Base, engine
+from app.core.logging import setup_logging
+from app.api.routes.players import router as players_router
+from app.api.routes.feed import router as feed_router
+from app.api.routes.watchlist import router as watchlist_router
+from app.api.routes.alerts import router as alerts_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables on startup
-    await init_db()
+    setup_logging()
+
+    # Import all models so Base.metadata is populated
+    import app.models  # noqa: F401
+    from app.name_resolution.variants import PlayerSearchVariant  # noqa: F401
+
+    # Create tables on startup (dev convenience; use alembic in production)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
     yield
 
 
-app = FastAPI(title="CardScout", lifespan=lifespan)
-
-# Mount static files
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+app = FastAPI(title="CardEdge", lifespan=lifespan)
 
 # Include routers
-app.include_router(prospects_router)
-app.include_router(signals_router)
-app.include_router(cards_router)
-app.include_router(news_router)
-app.include_router(scores_router)
+app.include_router(players_router)
+app.include_router(feed_router)
 app.include_router(watchlist_router)
-
-
-@app.get("/", response_class=HTMLResponse)
-async def index():
-    template = BASE_DIR / "templates" / "index.html"
-    return HTMLResponse(content=template.read_text())
+app.include_router(alerts_router)
 
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "app": "CardScout"}
+    return {"status": "ok", "app": "CardEdge"}

@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /c/Users/Ben/PycharmProjects/CardTracker log --oneline)",
+      "Bash(mkdir -p app/core app/api/routes app/models app/schemas app/services app/scoring app/ingestion/baseball app/ingestion/market app/ingestion/attention app/name_resolution app/jobs app/utils frontend/pages scripts tests alembic)",
+      "Bash(touch app/core/__init__.py app/api/__init__.py app/api/routes/__init__.py app/models/__init__.py app/schemas/__init__.py app/services/__init__.py app/scoring/__init__.py app/ingestion/__init__.py app/ingestion/baseball/__init__.py app/ingestion/market/__init__.py app/ingestion/attention/__init__.py app/name_resolution/__init__.py app/jobs/__init__.py app/utils/__init__.py tests/__init__.py)",
+      "Bash(ls alembic.ini)",
+      "Bash(ls alembic/)",
+      "Bash(python -c \"import rapidfuzz; print\\('rapidfuzz OK'\\)\")",
+      "Bash(python -c \"import pydantic_settings; print\\('pydantic_settings OK'\\)\")",
+      "Bash(python -c \"import httpx; print\\('httpx OK'\\)\")",
+      "Bash(pip install:*)",
+      "Bash(python -c \"from app.models import Player, PlayerEvent, ScoreDaily, Alert, Watchlist, MarketSale; print\\('All models import OK'\\)\")",
+      "Bash(ls .venv/Scripts/python.exe)",
+      "Bash(.venv/Scripts/python.exe -c \"import sqlalchemy; print\\('SA OK'\\)\")",
+      "Bash(.venv/Scripts/pip.exe install:*)",
+      "Bash(.venv/Scripts/python.exe -c \"from app.models import Player, PlayerEvent, ScoreDaily, Alert, Watchlist, MarketSale; print\\('All models import OK'\\)\")",
+      "Bash(.venv/Scripts/python.exe -m pytest tests/ -v)",
+      "Bash(.venv/Scripts/python.exe -c ':*)"
+    ]
+  }
+}
