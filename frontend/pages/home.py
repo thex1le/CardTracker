@@ -8,6 +8,21 @@ import streamlit as st
 def render_home(api_base_url: str) -> None:
     st.header("Today's Opportunities")
 
+    # Pipeline trigger
+    if st.button("Run Pipeline (Ingest + Scores + Alerts)"):
+        with st.spinner("Running pipeline... this may take a few minutes."):
+            try:
+                resp = httpx.post(f"{api_base_url}/api/pipeline", timeout=600)
+                result = resp.json()
+                if all(v == "ok" for v in result.get("results", {}).values()):
+                    st.success("Pipeline complete!")
+                else:
+                    st.warning(f"Pipeline finished with issues: {result['results']}")
+            except Exception as e:
+                st.error(f"Pipeline failed: {e}")
+
+    st.divider()
+
     # Filter row
     col1, col2, col3 = st.columns(3)
     with col1:

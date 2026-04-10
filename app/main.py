@@ -37,3 +37,32 @@ app.include_router(alerts_router)
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "app": "CardEdge"}
+
+
+@app.post("/api/pipeline")
+async def run_pipeline():
+    """Run the full daily pipeline: ingest -> scores -> alerts."""
+    from app.jobs.run_daily_ingest import run_daily_ingest
+    from app.jobs.run_score_refresh import run_score_refresh
+    from app.jobs.run_alerts import run_alerts
+
+    results = {}
+    try:
+        await run_daily_ingest()
+        results["ingest"] = "ok"
+    except Exception as e:
+        results["ingest"] = f"error: {e}"
+
+    try:
+        await run_score_refresh()
+        results["scores"] = "ok"
+    except Exception as e:
+        results["scores"] = f"error: {e}"
+
+    try:
+        await run_alerts()
+        results["alerts"] = "ok"
+    except Exception as e:
+        results["alerts"] = f"error: {e}"
+
+    return {"status": "complete", "results": results}
