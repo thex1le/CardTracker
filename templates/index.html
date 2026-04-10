@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardScout - Prospect Investment Dashboard</title>
+    <link rel="stylesheet" href="/static/css/main.css?v=7">
+</head>
+<body>
+    <header>
+        <div class="header-main">
+            <h1>CardScout</h1>
+            <p>Top 100 Prospects &mdash; Investment Scores &mdash; Signals &mdash; Market &mdash; Sentiment</p>
+        </div>
+        <div class="header-actions">
+            <button id="alertsBell" class="header-btn" title="User alerts">
+                Alerts <span id="userAlertCount" class="badge zero">0</span>
+            </button>
+            <button id="signalsToggle" class="header-btn" title="Toggle signals panel">
+                Signals <span id="signalCount" class="badge zero">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="prospects">Prospects</button>
+        <button class="tab-btn" data-tab="market">Market</button>
+        <button class="tab-btn" data-tab="news">News <span id="alertCount" class="badge zero">0</span></button>
+        <button class="tab-btn" data-tab="watchlist">Watchlist</button>
+    </nav>
+
+    <!-- Prospects Tab Controls -->
+    <div class="controls" id="prospects-controls">
+        <input type="text" id="search" placeholder="Search by name or team...">
+        <span class="sort-label">Sort by:</span>
+        <select id="sortBy">
+            <option value="perf_rank">Performance Rank</option>
+            <option value="bowman_rank">Prospect Rank</option>
+            <option value="name">Name</option>
+            <option value="team">Team</option>
+            <option value="score">Score</option>
+        </select>
+        <select id="posFilter">
+            <option value="all">All Positions</option>
+            <option value="hitter">Hitters Only</option>
+            <option value="pitcher">Pitchers Only</option>
+        </select>
+        <button id="refreshBtn">Refresh Data</button>
+        <button id="detectBtn">Detect Signals</button>
+        <button id="computeScoresBtn">Compute Scores</button>
+    </div>
+
+    <!-- Market Tab Controls -->
+    <div class="controls" id="market-controls" style="display:none;">
+        <input type="text" id="marketSearch" placeholder="Search player for card prices...">
+        <button id="marketSearchBtn">Search Cards</button>
+        <button id="marketRefreshAllBtn">Refresh All Prices</button>
+    </div>
+
+    <div class="main-layout">
+        <!-- Signals Panel -->
+        <aside id="signalsPanel" class="signals-panel hidden">
+            <div class="signals-header">
+                <h3>Active Signals</h3>
+                <select id="signalFilter">
+                    <option value="all">All Types</option>
+                    <option value="breakout">Breakout</option>
+                    <option value="callup">Callup</option>
+                    <option value="milestone">Milestone</option>
+                    <option value="statcast_elite">Statcast Elite</option>
+                </select>
+            </div>
+            <div id="signalsList" class="signals-list">
+                <div class="no-stats">No signals detected yet.</div>
+            </div>
+        </aside>
+
+        <!-- Alerts Dropdown -->
+        <div id="alertsDropdown" class="alerts-dropdown hidden">
+            <div class="alerts-dropdown-header">
+                <h4>Alerts</h4>
+                <button id="markAllRead" style="background:none;border:none;color:#8ba4d4;cursor:pointer;font-size:12px;">Mark all read</button>
+            </div>
+            <div id="alertsDropdownList"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="container">
+            <!-- Prospects Tab -->
+            <div id="tab-prospects">
+                <div id="loading">
+                    <div class="spinner"></div>
+                    <div>Loading prospect data...</div>
+                    <div style="font-size:13px;color:#5a6080;margin-top:8px;">
+                        First load fetches stats for 100 players and may take a minute.
+                    </div>
+                </div>
+                <div id="count-display" class="count-display" style="display:none;"></div>
+                <div class="table-wrapper">
+                <table id="prospects-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th data-sort="perf_rank" data-tooltip="Performance ranking based on stats">#</th>
+                            <th data-sort="bowman_rank" data-tooltip="FanGraphs prospect ranking">Rank</th>
+                            <th data-sort="name">Player</th>
+                            <th data-sort="team">Team</th>
+                            <th data-sort="pos">Pos</th>
+                            <th data-sort="fv" data-tooltip="FanGraphs Future Value scouting grade">FV</th>
+                            <th data-sort="eta" data-tooltip="Estimated MLB arrival year">ETA</th>
+                            <th data-sort="inv_score" data-tooltip="Composite investment score (0-100): performance + momentum + market + sentiment + health">Inv</th>
+                            <th data-sort="score" data-tooltip="Raw performance score: OPS for hitters, inverted ERA for pitchers">Perf</th>
+                            <th data-tooltip="Active signals: B=Breakout, C=Callup, M=Milestone, S=Statcast">Sig</th>
+                            <th data-tooltip="News sentiment alerts: Red=danger, Yellow=caution, Green=positive">News</th>
+                            <th data-tooltip="Add to watchlist">W</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+                </div>
+                <div class="legend" id="legend" style="display:none;">
+                    <span>Inv Score = composite 0-100 (performance + momentum + market + sentiment + health)</span>
+                    <span>Click "Compute Scores" to calculate</span>
+                    <span>Click player name to expand</span>
+                </div>
+            </div>
+
+            <!-- Watchlist Tab -->
+            <div id="tab-watchlist" style="display:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
+                    <h3 style="color:#c9a227;">Watchlist</h3>
+                </div>
+                <div id="watchlistContent">
+                    <div class="no-stats">Your watchlist is empty. Click the star icon on the Prospects tab to add players.</div>
+                </div>
+            </div>
+
+            <!-- News Tab -->
+            <div id="tab-news" style="display:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
+                    <h3 style="color:#c9a227;">News &amp; Sentiment Monitor</h3>
+                    <button id="newsRefreshBtn" style="background:#c9a227;color:#0a0e17;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;">Refresh News</button>
+                </div>
+                <div id="alerts-section">
+                    <h4 style="color:#f44336;margin-bottom:8px;">Active Alerts</h4>
+                    <div id="alertsList" class="no-stats">No alerts.</div>
+                </div>
+                <div id="news-feed" style="margin-top:20px;">
+                    <h4 style="color:#8ba4d4;margin-bottom:8px;">Recent News</h4>
+                    <div id="newsList" class="no-stats">No news loaded yet.</div>
+                </div>
+            </div>
+
+            <!-- Market Tab -->
+            <div id="tab-market" style="display:none;">
+                <div id="market-loading" style="display:none;">
+                    <div class="spinner"></div>
+                    <div>Fetching card prices...</div>
+                </div>
+                <div id="market-content">
+                    <div class="market-intro">
+                        <h3>Card Market Tracker</h3>
+                        <p>Search for a player to see their card sales from eBay (via 130point.com).</p>
+                    </div>
+                </div>
+                <div id="market-results" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js?v=7"></script>
+</body>
+</html>
