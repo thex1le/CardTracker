@@ -36,7 +36,7 @@ async def fetch_top_prospects(count: int = 100) -> list[dict]:
     for p in data[:count]:
         prospects.append({
             "rank": p.get("Ovr_Rank", 0),
-            "name": p.get("playerName", ""),
+            "name": p.get("PlayerName", "") or p.get("playerName", ""),
             "team": p.get("Team", ""),
             "pos": p.get("Position", ""),
             "fv": str(p.get("FV_Current", "")),
